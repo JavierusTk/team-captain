@@ -14,14 +14,18 @@ Enables Team Captain to create sessions on a Windows host via SSH.
 From a normal PowerShell window:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File setup-windows-user.ps1
+powershell -ExecutionPolicy Bypass -File windows-setup\setup-windows-user.ps1
 ```
 
-> **Note**: The scripts are not included in this repo. They are part of the
-> development environment that configures the Windows host. The setup installs:
-> - OpenSSH Server (Windows native)
-> - MSYS2 + tmux
-> - Your WSL SSH key in `C:\ProgramData\ssh\administrators_authorized_keys`
+The script:
+- Reads your WSL SSH public key automatically
+- Launches `setup-windows-ssh-tmux.ps1` via UAC with the key pre-filled
+
+The admin script installs:
+- OpenSSH Server (Windows native)
+- MSYS2 + tmux (via pacman)
+- Your WSL SSH key in `C:\ProgramData\ssh\administrators_authorized_keys`
+- MSYS2 `usr/bin` in the system PATH
 
 A UAC prompt will appear to complete the admin steps.
 

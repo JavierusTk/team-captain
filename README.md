@@ -22,7 +22,7 @@ Sessions can run locally (WSL) or on a remote Windows host via SSH + MSYS2.
 
 - tmux (`sudo apt install tmux`)
 - Python 3.10+
-- For Windows sessions: [setup guide](docs/windows-setup.md)
+- For Windows sessions: run `windows-setup\setup-windows-user.ps1` — [full guide](docs/windows-setup.md)
 
 ### Install
 
