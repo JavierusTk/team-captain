@@ -79,66 +79,66 @@ async def list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="terminal_create",
-            description="Crea una sesión tmux y ejecuta un comando en ella.",
+            description="Create a tmux session and run a command in it.",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "command": {"type": "string", "description": "Comando a ejecutar"},
-                    "session_name": {"type": "string", "description": "Nombre opcional de la sesión"},
-                    "cols": {"type": "integer", "default": 220, "description": "Ancho del terminal"},
-                    "rows": {"type": "integer", "default": 50, "description": "Alto del terminal"},
-                    "host": {"type": "string", "description": "Host SSH remoto para sesiones Windows (ej: 'localhost'). Si se omite, sesión local en WSL."},
+                    "command": {"type": "string", "description": "Command to run"},
+                    "session_name": {"type": "string", "description": "Optional session name; auto-generated if omitted"},
+                    "cols": {"type": "integer", "default": 220, "description": "Terminal width"},
+                    "rows": {"type": "integer", "default": 50, "description": "Terminal height"},
+                    "host": {"type": "string", "description": "SSH host for Windows sessions (e.g. 'localhost'). Omit for local WSL session."},
                 },
                 "required": ["command"],
             },
         ),
         types.Tool(
             name="terminal_read",
-            description="Captura el output actual de la sesión (últimas N líneas).",
+            description="Capture current terminal output (last N lines).",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string"},
-                    "lines": {"type": "integer", "default": 50, "description": "Líneas a capturar desde el final"},
-                    "strip_ansi": {"type": "boolean", "default": True, "description": "Limpiar códigos ANSI"},
+                    "lines": {"type": "integer", "default": 50, "description": "Number of lines to capture from the end"},
+                    "strip_ansi": {"type": "boolean", "default": True, "description": "Strip ANSI escape codes"},
                 },
                 "required": ["session_id"],
             },
         ),
         types.Tool(
             name="terminal_send",
-            description="Envía texto a la sesión. Usa -l internamente para envío literal seguro.",
+            description="Send text to a session. Uses tmux -l internally for safe literal input.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string"},
-                    "text": {"type": "string", "description": "Texto a enviar"},
-                    "press_enter": {"type": "boolean", "default": True, "description": "Añadir Enter al final"},
-                    "special_key": {"type": "string", "description": "Alternativa: Up, Down, Space, Escape, Tab, C-c"},
+                    "text": {"type": "string", "description": "Text to send"},
+                    "press_enter": {"type": "boolean", "default": True, "description": "Append Enter after the text"},
+                    "special_key": {"type": "string", "description": "Alternative: send a special key (Up, Down, Space, Escape, Tab, C-c)"},
                 },
                 "required": ["session_id", "text"],
             },
         ),
         types.Tool(
             name="terminal_send_raw",
-            description="Envía secuencias de teclas crudas en notación tmux.",
+            description="Send raw key sequences in tmux notation.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string"},
-                    "keys": {"type": "string", "description": "Notación tmux: Up, Down, Space, Enter, C-c"},
+                    "keys": {"type": "string", "description": "tmux key notation: Up, Down, Space, Enter, C-c"},
                 },
                 "required": ["session_id", "keys"],
             },
         ),
         types.Tool(
             name="terminal_wait",
-            description="Espera hasta que el output contenga un patrón (o timeout).",
+            description="Wait until session output contains a pattern, or until timeout.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string"},
-                    "pattern": {"type": "string", "description": "Texto a esperar en el output"},
+                    "pattern": {"type": "string", "description": "Text to wait for in the output"},
                     "timeout_seconds": {"type": "integer", "default": 30},
                     "poll_interval": {"type": "number", "default": 0.5},
                 },
@@ -147,7 +147,7 @@ async def list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="terminal_close",
-            description="Cierra la sesión tmux.",
+            description="Kill a tmux session.",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -158,12 +158,12 @@ async def list_tools() -> list[types.Tool]:
         ),
         types.Tool(
             name="terminal_list",
-            description="Lista sesiones activas. Consulta tmux directamente como fuente de verdad.",
+            description="List active sessions. Queries tmux directly as source of truth.",
             inputSchema={"type": "object", "properties": {}},
         ),
         types.Tool(
             name="terminal_resize",
-            description="Cambia el tamaño de la ventana de una sesión activa.",
+            description="Resize the window of an active session.",
             inputSchema={
                 "type": "object",
                 "properties": {
