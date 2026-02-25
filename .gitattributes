@@ -2,3 +2,5 @@
 *.py eol=lf
 *.txt eol=lf
 *.md eol=lf
+*.ps1 eol=lf
+*.sh eol=lf
