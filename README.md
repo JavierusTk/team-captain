@@ -74,6 +74,38 @@ terminal_wait(session_id="win", pattern="Running on", timeout_seconds=60)
 | `terminal_close` | Kill a session |
 | `terminal_list` | List active sessions |
 | `terminal_resize` | Resize a session window |
+| `terminal_cleanup` | Remove dead sessions from tracking |
+
+## Error handling
+
+All tool calls return structured JSON errors instead of crashing:
+
+```json
+{"error": "Cannot reach host 'myhost' via SSH: connection timed out", "code": "SSH_UNREACHABLE"}
+```
+
+Error codes: `TIMEOUT`, `SSH_UNREACHABLE`, `INTERNAL_ERROR`, `UNKNOWN_TOOL`.
+
+SSH connectivity is verified before creating remote sessions (fail-fast). All subprocess calls have a 30-second timeout to prevent hung connections from blocking the server.
+
+## Logging
+
+Logs go to **stderr** (stdout is reserved for the MCP protocol). Every tool call is logged with session ID and timing. Set `LOG_LEVEL` environment variable to control verbosity.
+
+## Architecture: what this is and what it isn't
+
+Team Captain is **infrastructure tooling** — it exposes tmux sessions as MCP tools. It is deliberately minimal (~250 lines, single file).
+
+**What belongs here**: session lifecycle, terminal I/O, error handling, SSH connectivity, logging.
+
+**What does NOT belong here** (and why):
+- **Context management** — the calling agent controls its own context window, not the tool server
+- **Permission models** — tmux can't enforce command restrictions; real isolation requires OS-level mechanisms (containers, namespaces)
+- **Retry policies** — the agent has more context about whether retrying makes sense; the server fails fast
+- **Output validation** — the caller knows what format it expects, not the terminal reader
+- **Delegation chain tracking** — the server doesn't know about agent hierarchies; that's orchestration-layer concern
+
+This separation keeps the tool reliable and simple. Orchestration complexity belongs in the agent that uses these tools, not in the tools themselves.
 
 ## License
 
