@@ -15,7 +15,7 @@ MCP server for orchestrating multi-agent terminal sessions via tmux.
 
 **Error handling**: `call_tool()` delegates to `_dispatch()` wrapped in try/except. `subprocess.TimeoutExpired` → `TIMEOUT`, generic exceptions → `INTERNAL_ERROR`. SSH health is checked before remote session creation → `SSH_UNREACHABLE`. Helper: `_error(message, code)` returns structured JSON.
 
-**Logging**: All logging goes to stderr via `logging.basicConfig(stream=sys.stderr)`. Every tool call logs session_id and timing. stdout is reserved for MCP protocol.
+**Logging**: All logging goes to stderr via `logging.basicConfig(stream=sys.stderr)`. Every tool call logs session_id, timing, and duration. stdout is reserved for MCP protocol. `LOG_LEVEL` env var controls verbosity (default: `INFO`).
 
 **Subprocess timeouts**: All `subprocess.run()` calls use `timeout=SUBPROCESS_TIMEOUT` (30s) to prevent hung SSH connections from blocking the server indefinitely.
 

@@ -4,6 +4,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import shlex
 import subprocess
@@ -20,7 +21,7 @@ from mcp import types
 
 logging.basicConfig(
     stream=sys.stderr,
-    level=logging.INFO,
+    level=getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO),
     format="%(asctime)s %(levelname)s %(message)s",
     datefmt="%H:%M:%S",
 )
@@ -265,16 +266,19 @@ async def _dispatch(name: str, arguments: dict):
     elif name == "terminal_read":
         session_id = arguments["session_id"]
         lines = arguments.get("lines", 50)
+        start = time.monotonic()
         output = tmux_for(session_id, ["capture-pane", "-t", session_id, "-p", "-S", f"-{lines}"])
         if arguments.get("strip_ansi", True):
             output = strip_ansi(output)
-        log.info("read %s (%d lines)", session_id, lines)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("read %s (%d lines, %dms)", session_id, lines, duration_ms)
         return [types.TextContent(type="text", text=output)]
 
     elif name == "terminal_send":
         session_id = arguments["session_id"]
         text = arguments.get("text", "")
         press_enter = arguments.get("press_enter", True)
+        start = time.monotonic()
         if arguments.get("special_key"):
             tmux_for(session_id, ["send-keys", "-t", session_id, arguments["special_key"]])
         else:
@@ -282,13 +286,16 @@ async def _dispatch(name: str, arguments: dict):
                 tmux_for(session_id, ["send-keys", "-t", session_id, "-l", text])
             if press_enter:
                 tmux_for(session_id, ["send-keys", "-t", session_id, "Enter"])
-        log.info("send %s", session_id)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("send %s (%dms)", session_id, duration_ms)
         return [types.TextContent(type="text", text='{"status": "sent"}')]
 
     elif name == "terminal_send_raw":
         session_id = arguments["session_id"]
+        start = time.monotonic()
         tmux_for(session_id, ["send-keys", "-t", session_id, arguments["keys"]])
-        log.info("send_raw %s", session_id)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("send_raw %s (%dms)", session_id, duration_ms)
         return [types.TextContent(type="text", text='{"status": "sent"}')]
 
     elif name == "terminal_wait":
@@ -313,12 +320,15 @@ async def _dispatch(name: str, arguments: dict):
 
     elif name == "terminal_close":
         session_id = arguments["session_id"]
+        start = time.monotonic()
         tmux_for(session_id, ["kill-session", "-t", session_id])
         sessions.pop(session_id, None)
-        log.info("close %s", session_id)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("close %s (%dms)", session_id, duration_ms)
         return [types.TextContent(type="text", text='{"status": "closed"}')]
 
     elif name == "terminal_list":
+        start = time.monotonic()
         # Local sessions
         raw = tmux(["list-sessions", "-F", "#{session_name}"])
         alive_local = set(raw.splitlines()) if raw else set()
@@ -341,22 +351,27 @@ async def _dispatch(name: str, arguments: dict):
         for sid in alive_local - set(sessions):
             result.append({"session_id": sid, "command": "?", "created_at": "?", "alive": True, "host": None})
 
-        log.info("list: %d tracked, %d alive", len(sessions), sum(1 for r in result if r["alive"]))
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("list: %d tracked, %d alive (%dms)", len(sessions), sum(1 for r in result if r["alive"]), duration_ms)
         return [types.TextContent(type="text", text=json.dumps(result))]
 
     elif name == "terminal_resize":
         session_id = arguments["session_id"]
         cols = arguments.get("cols", 220)
         rows = arguments.get("rows", 50)
+        start = time.monotonic()
         tmux_for(session_id, ["resize-window", "-t", session_id, "-x", str(cols), "-y", str(rows)])
-        log.info("resize %s to %dx%d", session_id, cols, rows)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("resize %s to %dx%d (%dms)", session_id, cols, rows, duration_ms)
         return [types.TextContent(type="text", text='{"status": "resized"}')]
 
     elif name == "terminal_cleanup":
+        start = time.monotonic()
         dead = [sid for sid in sessions if not tmux_session_alive(sid)]
         for sid in dead:
             sessions.pop(sid, None)
-        log.info("cleanup: removed %d dead sessions %s", len(dead), dead)
+        duration_ms = round((time.monotonic() - start) * 1000)
+        log.info("cleanup: removed %d dead sessions %s (%dms)", len(dead), dead, duration_ms)
         return [types.TextContent(type="text", text=json.dumps({
             "removed": len(dead),
             "removed_ids": dead,

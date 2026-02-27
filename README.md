@@ -92,6 +92,15 @@ SSH connectivity is verified before creating remote sessions (fail-fast). All su
 
 Logs go to **stderr** (stdout is reserved for the MCP protocol). Every tool call is logged with session ID and timing. Set `LOG_LEVEL` environment variable to control verbosity.
 
+## Practical limits
+
+There is no hard-coded session cap. Practical limits come from the environment:
+
+- **tmux** handles hundreds of sessions without issue; it's not the bottleneck.
+- **SSH connections** are the real constraint for remote sessions — each `terminal_read`/`terminal_send` spawns a subprocess with an SSH call. With many concurrent remote sessions, SSH connection overhead adds up.
+- **Memory** is negligible — the server only stores a small dict per session.
+- **Rule of thumb**: 5–10 concurrent sessions work well in practice. Beyond that, latency on remote operations increases and you may want to batch work or close idle sessions.
+
 ## Architecture: what this is and what it isn't
 
 Team Captain is **infrastructure tooling** — it exposes tmux sessions as MCP tools. It is deliberately minimal (~250 lines, single file).
